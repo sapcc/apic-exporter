@@ -47,7 +47,7 @@ class ApicMCPCollector(BaseCollector.BaseCollector):
                     LOG.debug("host: %s, ip: %s", fault_lifecyle, fault_summary, fault_desc)
                     metric_counter += 1
 
-                    c_mcp_faults.add_metric(labels=[host, fault_lifecyle, fault_summary, fault_desc], value=1)
+                    c_mcp_faults.add_metric(labels=[host, fault_summary, fault_desc, fault_lifecyle], value=1)
             break  # Each host produces the same metrics.
 
         yield c_mcp_faults
