@@ -20,7 +20,7 @@ class ApicMCPCollector(BaseCollector.BaseCollector):
         c_mcp_faults = CounterMetricFamily(
             'network_apic_mcp_fault_counter',
             'Counter for MCP Faults',
-            labels=['apicHost', 'ip', 'fault_lifecyle', 'fault_summary', 'fault_desc'])
+            labels=['apicHost', 'fault_summary', 'fault_desc', 'fault_lifecyle'])
 
         metric_counter = 0
         query = "/api/node/class/faultInst.json?query-target-filter=or(eq(faultInst.code,\"F2533\"),eq(faultInst.code,\"F2534\"))"
