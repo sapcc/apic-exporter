@@ -56,7 +56,7 @@ class ApicMcecmProcessesCollector(BaseCollector.BaseCollector):
                 LOG.debug("Fetching process data for node %s %s", node_dn,
                           node_role)
 
-                proc_query = '/api/node/class/' + node_dn + '/procProc.json?query-target-filter=eq(procProc.name,"mcecm")'
+                proc_query = f'/api/node/class/{node_dn}/procProc.json?query-target-filter=eq(procProc.name,"mcecm")'
                 proc_data = self.query_host(host, proc_query)
                 if proc_data is None:
                     LOG.info("Apic host %s node %s has no mcecm process", host,
