@@ -21,7 +21,9 @@ class BaseCollector(ABC):
         pass
 
     def query_host(self, host: str, query: str, timeout: int = TIMEOUT) -> Dict:
-        """Executes the query against a specific APIC host and returns the fetched data or None if fetched data is invalid"""
+        """Executes the query against a specific APIC host
+           Returns the fetched data or None if fetched data is invalid
+        """
         fetched_data = self.__connection.getRequest(host, query, timeout)
         if fetched_data is None:
             return None
