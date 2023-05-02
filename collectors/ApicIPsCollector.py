@@ -25,7 +25,8 @@ class ApicIPsCollector(BaseCollector.BaseCollector):
 
         metric_counter = 0
         query = '/api/node/class/fvIp.json' + \
-                '?rsp-subtree=full&rsp-subtree-class=fvReportingNode&query-target-filter=and(ne(fvIp.debugMACMessage,""))'
+                '?rsp-subtree=full' + \
+                '&rsp-subtree-class=fvReportingNode&query-target-filter=and(ne(fvIp.debugMACMessage,""))'
         for host in self.hosts:
             fetched_data = self.query_host(host, query)
             if fetched_data is None:
