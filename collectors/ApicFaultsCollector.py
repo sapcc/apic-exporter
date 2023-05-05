@@ -20,17 +20,19 @@ class ApicFaultsCollector(Collector):
                'query-target-filter=or(eq(faultInst.lc,"raised"),eq(faultInst.lc,"soaking"))'
 
     def get_metrics(self, host: str, data: Dict) -> List[GaugeMetricFamily]:
-        """Collects APIC faults by type, severity, domain and acknowledgement"""
+        """Collects APIC faults by multiple categories"""
         g_apic_faults = GaugeMetricFamily('network_apic_faults',
-                                          'APIC faults by severity, type, domain and ack',
-                                          labels=['severity', 'type', 'domain', 'ack'])
+                                          'APIC faults by severity, type, domain, code, cause, openstack and ack',
+                                          labels=['severity', 'type', 'domain', 'code', 'cause', 'openstack', 'ack'])
 
         faults = {}
         for fault_object in data['imdata']:
             try:
                 attrs = unpack(fault_object, 'faultInst', 'attributes')
-                key = tuple(unpack(attrs, x)
-                            for x in ('severity', 'type', 'domain', 'ack'))
+                key = [unpack(attrs, x) for x in ('severity', 'type', 'domain', 'code', 'cause', 'dn', 'ack')]
+                # only interested in the presence of the keyword `openstack` within the DN
+                key[5] = '1' if key[5] is not None and "openstack" in key[5] else '0'
+                key = tuple(key)
                 faults[key] = faults.get(key, 0) + 1
             except ValueError as e:
                 LOG.error(
