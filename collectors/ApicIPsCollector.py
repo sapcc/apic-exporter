@@ -5,23 +5,21 @@ from prometheus_client.core import CounterMetricFamily, Summary
 import BaseCollector
 
 LOG = logging.getLogger('apic_exporter.exporter')
-REQUEST_TIME = Summary('apic_ips_processing_seconds',
-                       'Time spent processing request')
+REQUEST_TIME = Summary('apic_ips_processing_seconds', 'Time spent processing request')
 
 
 class ApicIPsCollector(BaseCollector.BaseCollector):
+
     def describe(self):
-        yield CounterMetricFamily('network_apic_duplicate_ip_counter',
-                                  'Counter for duplicate IPs')
+        yield CounterMetricFamily('network_apic_duplicate_ip_counter', 'Counter for duplicate IPs')
 
     @REQUEST_TIME.time()
     def collect(self):
-        LOG.debug('Collecting APIC IP metrics ...')
+        LOG.debug('collecting apic IP metrics ...')
 
-        c_dip = CounterMetricFamily(
-            'network_apic_duplicate_ip_counter',
-            'Counter for duplicate IPs',
-            labels=['apicHost', 'ip', 'mac', 'nodeId', 'tenant'])
+        c_dip = CounterMetricFamily('network_apic_duplicate_ip_counter',
+                                    'Counter for duplicate IPs',
+                                    labels=['apicHost', 'ip', 'mac', 'nodeId', 'tenant'])
 
         metric_counter = 0
         query = '/api/node/class/fvIp.json' + \
@@ -55,13 +53,12 @@ class ApicIPsCollector(BaseCollector.BaseCollector):
                 if child_nodes:
                     _nodeIds = '+'.join(child_nodes)
 
-                LOG.debug("host: %s, ip: %s, mac: %s, nodes: %s", host, addr, mac, _nodeIds)
+                LOG.debug(f'host: {host}, ip: {addr}, mac: {mac}, nodes: {_nodeIds}')
                 metric_counter += 1
 
-                c_dip.add_metric(labels=[host, addr, mac, _nodeIds, tenant],
-                                 value=1)
+                c_dip.add_metric(labels=[host, addr, mac, _nodeIds, tenant], value=1)
             break  # Each host produces the same metrics.
 
         yield c_dip
 
-        LOG.info('Collected %s APIC IP metrics', metric_counter)
+        LOG.info(f'collected {metric_counter} apic IP metrics')

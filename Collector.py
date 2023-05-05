@@ -9,6 +9,7 @@ LOG = logging.getLogger('apic_exporter.exporter')
 
 
 class Collector(BaseCollector):
+
     def __init__(self, name: str, config: Dict):
         super().__init__(config)
         self.__name = name
@@ -31,7 +32,7 @@ class Collector(BaseCollector):
             for host in self.hosts:
                 fetched_data = self.query_host(host, self.get_query())
                 if fetched_data is None:
-                    LOG.warning("Skipping apic host %s did not return anything for %s", host, self.get_query())
+                    LOG.warning(f'Skipping apic host {host} did not return anything for {self.get_query()}')
                     continue
                 metrics = self.get_metrics(host, fetched_data)
                 if metrics is None:
@@ -40,5 +41,5 @@ class Collector(BaseCollector):
                     yield metric
                     metric_counter += len(metric.samples)
                 break  # all hosts produce the same metrics, hence querying one is sufficient
-            LOG.info('Collected %s %s metrics', metric_counter, self.__name)
+            LOG.info('collected %s %s metrics', metric_counter, self.__name)
             return

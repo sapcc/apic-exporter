@@ -12,8 +12,7 @@ class ApicFaultsCollector(Collector):
         super().__init__('apic_faults', config)
 
     def describe(self):
-        yield GaugeMetricFamily('network_apic_faults',
-                                'APIC faults')
+        yield GaugeMetricFamily('network_apic_faults', 'APIC faults')
 
     def get_query(self) -> str:
         return '/api/node/class/faultInst.json?' + \
@@ -35,12 +34,10 @@ class ApicFaultsCollector(Collector):
                 key = tuple(key)
                 faults[key] = faults.get(key, 0) + 1
             except ValueError as e:
-                LOG.error(
-                    f"faultCollector: invalid path {e} in {fault_object}")
+                LOG.error(f"faultCollector: invalid path {e} in {fault_object}")
 
         for k, v in faults.items():
-            g_apic_faults.add_metric(labels=k,
-                                     value=v)
+            g_apic_faults.add_metric(labels=k, value=v)
         return [g_apic_faults]
 
 

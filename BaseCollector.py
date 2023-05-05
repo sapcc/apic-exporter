@@ -7,10 +7,10 @@ LOG = logging.getLogger('apic_exporter.exporter')
 
 
 class BaseCollector(ABC):
+
     def __init__(self, config: Dict):
         self.hosts: List[str] = config['apic_hosts'].split(',')
-        self.__connection = Connection(self.hosts, config['apic_user'],
-                                       config['apic_password'])
+        self.__connection = Connection(self.hosts, config['apic_user'], config['apic_password'])
 
     @abstractmethod
     def describe(self):
@@ -28,9 +28,7 @@ class BaseCollector(ABC):
         if fetched_data is None:
             return None
         if not self.__connection.isDataValid(fetched_data):
-            LOG.warning(
-                "Apic host %s, %s did not return anything", host,
-                query)
+            LOG.warning(f'apic host {host}, {query} did not return anything')
             return None
         return fetched_data
 
