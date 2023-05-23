@@ -12,8 +12,7 @@ class ApicCoopDbCollector(Collector):
         super().__init__('apic_coop', config)
 
     def describe(self):
-        yield GaugeMetricFamily('network_apic_coop_records_total',
-                                'APIC COOP DB entries')
+        yield GaugeMetricFamily('network_apic_coop_records_total', 'APIC COOP DB entries')
 
     def get_query(self) -> str:
         return '/api/node/class/fabricNode.json?query-target-filter=eq(fabricNode.role,"spine")'
@@ -34,7 +33,6 @@ class ApicCoopDbCollector(Collector):
             if fetched_data is None:
                 return None
             fetched_count = fetched_data['imdata'][0]['moCount']['attributes']['count']
-            g_coop_db.add_metric(labels=[host, spine_attributes['dn']],
-                                 value=fetched_count)
+            g_coop_db.add_metric(labels=[host, spine_attributes['dn']], value=fetched_count)
 
         return [g_coop_db]

@@ -18,6 +18,7 @@ session_tuple = namedtuple('session_tuple', 'session available')
 
 @singleton
 class SessionPool(object):
+
     def __init__(self, hosts, user, password):
         """Initializes the Session Pool. Sessions contains the session to a host and an Availability flag"""
         self.__sessions = {}
@@ -42,8 +43,7 @@ class SessionPool(object):
 
         cookie = self.requestCookie(host, session)
         if cookie is not None:
-            session.cookies = cookies.cookiejar_from_dict(
-                cookie_dict={"APIC-cookie": cookie})
+            session.cookies = cookies.cookiejar_from_dict(cookie_dict={"APIC-cookie": cookie})
 
         available = True if session is not None and cookie is not None else False
         if not available:
@@ -61,8 +61,7 @@ class SessionPool(object):
             if len(value.session.cookies) == 0:
                 cookie = self.requestCookie(host, value.session)
                 if cookie is not None:
-                    value.session.cookies = cookies.cookiejar_from_dict(
-                        cookie_dict={"APIC-cookie": cookie})
+                    value.session.cookies = cookies.cookiejar_from_dict(cookie_dict={"APIC-cookie": cookie})
                     self.__sessions[host] = session_tuple(value.session, True)
                 else:
                     self.__sessions[host] = session_tuple(value.session, False)
@@ -77,7 +76,7 @@ class SessionPool(object):
     def set_session_unavailable(self, host: str):
         """Set a given host to be unavailable. Resets hosts, if all are unavailable"""
         if host in self.__sessions:
-            LOG.debug("Flag host %s as unavailable", host)
+            LOG.debug(f'flag host {host} as unavailable')
             session, _ = self.__sessions[host]
             self.__sessions[host] = session_tuple(session, False)
             self.__unavailable_sessions += 1
@@ -92,8 +91,8 @@ class SessionPool(object):
 
         if cookie is not None:
             session.cookies.clear_session_cookies()
-            session.cookies = cookies.cookiejar_from_dict(
-                cookie_dict={"APIC-cookie": cookie}, cookiejar=session.cookies)
+            session.cookies = cookies.cookiejar_from_dict(cookie_dict={"APIC-cookie": cookie},
+                                                          cookiejar=session.cookies)
             available = True
         else:
             available = False
@@ -105,26 +104,17 @@ class SessionPool(object):
         """Login to the host and retrieve cookie"""
         disable_warnings(exceptions.InsecureRequestWarning)
 
-        LOG.info("Request token for %s", host)
+        LOG.info(f'request token for {host}')
 
         try:
-            url = "https://" + host + "/api/aaaLogin.json?"
-            payload = {
-                "aaaUser": {
-                    "attributes": {
-                        "name": self.__user,
-                        "pwd": self.__password
-                    }
-                }
-            }
+            url = f'https://{host}/api/aaaLogin.json?'
+            payload = {"aaaUser": {"attributes": {"name": self.__user, "pwd": self.__password}}}
             resp = session.post(url, json=payload, timeout=COOKIE_TIMEOUT)
-        except (requests.exceptions.ConnectTimeout,
-                requests.exceptions.ReadTimeout, TimeoutError):
-            LOG.error("Connection with host %s timed out after %s sec", host,
-                      COOKIE_TIMEOUT)
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, TimeoutError):
+            LOG.error(f'connection with host {host} timed out after {COOKIE_TIMEOUT} sec')
             return None
         except (requests.exceptions.ConnectionError, ConnectionError) as e:
-            LOG.error("Cannot connect to %s: %s", url, e)
+            LOG.error(f'cannot connect to {url}: {e}')
             return None
 
         cookie = None
@@ -133,12 +123,13 @@ class SessionPool(object):
             resp.close()
             cookie = res['imdata'][0]['aaaLogin']['attributes']['token']
         else:
-            LOG.error("url %s responds with %s", url, resp.status_code)
+            LOG.error(f'url {url} responds with {resp.status_code}')
 
         return cookie
 
 
 class Connection():
+
     def __init__(self, hosts: List[str], user: str, password: str):
         self.__pool = SessionPool(hosts, user, password)
 
@@ -151,39 +142,34 @@ class Connection():
         session, available = self.__pool.getSession(host)
 
         if not available:
-            LOG.info("Skipped unavailable host %s query %s", host, query)
+            LOG.info(f'skipped unavailable host {host} query {query}')
             return None
 
         try:
-            LOG.debug('Submitting request %s', url)
+            LOG.debug(f'submitting request {url}')
             resp = session.get(url, timeout=timeout)
-        except (requests.exceptions.ConnectTimeout,
-                requests.exceptions.ReadTimeout, TimeoutError):
-            LOG.error("Connection with host %s timed out after %s sec", host,
-                      timeout)
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, TimeoutError):
+            LOG.error(f'connection with host {host} timed out after {timeout} sec')
             self.__pool.set_session_unavailable(host)
             return None
         except (requests.exceptions.ConnectionError, ConnectionError) as e:
-            LOG.error("Cannot connect to %s: %s", url, e)
+            LOG.error(f'cannot connect to {url}: {e}')
             self.__pool.set_session_unavailable(host)
             return None
 
         # token is invalid, request a new token
-        if resp.status_code == 403 and ("Token was invalid" in resp.text
-                                        or "token" in resp.text):
+        if resp.status_code == 403 and ("Token was invalid" in resp.text or "token" in resp.text):
 
             session = self.__pool.refreshCookie(host)
 
             try:
                 resp = session.get(url, timeout=timeout)
-            except (requests.exceptions.ConnectTimeout,
-                    requests.exceptions.ReadTimeout, TimeoutError):
-                LOG.error("Connection with host %s timed out after %s sec",
-                          host, timeout)
+            except (requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, TimeoutError):
+                LOG.error(f'connection with host {host} timed out after {timeout} sec')
                 self.__pool.set_session_unavailable(host)
                 return None
             except (requests.exceptions.ConnectionError, ConnectionError) as e:
-                LOG.error("Cannot connect to %s: %s", url, e)
+                LOG.error(f'cannot connect to {url}: {e}')
                 self.__pool.set_session_unavailable(host)
                 return None
 
@@ -192,7 +178,7 @@ class Connection():
             resp.close()
             return res
         else:
-            LOG.error("url %s responding with %s", url, resp.status_code)
+            LOG.error(f'url {url} responding with {resp.status_code}')
             return None
 
     def get_unresponsive_hosts(self) -> List[str]:

@@ -27,7 +27,7 @@ def get_config(config_file):
             with open(config_file) as f:
                 config = yaml.load(f, Loader=yaml.Loader)
         except IOError as e:
-            LOG.error("Couldn't open configuration file: " + str(e))
+            LOG.error(f'could not open configuration file: {str(e)}')
             exit(1)
         # check if collectors are defined
         if 'collectors' not in config:
@@ -50,7 +50,7 @@ def get_config(config_file):
 
         return config
     else:
-        LOG.error("Config file doesn't exist: " + config_file)
+        LOG.error(f'config file does not exist: {config_file}')
         exit(1)
 
 
@@ -62,22 +62,18 @@ def initialize_collector_by_name(class_name, config):
     try:
         class_module = importlib.import_module(f'collectors.{class_name}')
     except ModuleNotFoundError as e:
-        LOG.error(f'No Collector {class_name} defined. {e}')
+        LOG.error(f'no collector {class_name} defined: {e}')
         return None
 
     try:
         return class_module.__getattribute__(class_name)(config)
     except AttributeError as e:
-        LOG.error(f'Unable to initialize {class_name}. {e}')
+        LOG.error(f'unable to initialize {class_name}: {e}')
         return None
 
 
 @click.command()
-@click.option("-p",
-              "--port",
-              metavar="<port>",
-              default=9102,
-              help="specify exporter serving port")
+@click.option("-p", "--port", metavar="<port>", default=9102, help="specify exporter serving port")
 @click.option("-c", "--config", metavar="<config>", help="path to rest config")
 @click.version_option()
 @click.help_option()
@@ -99,8 +95,8 @@ def main(port, config):
     format = '[%(asctime)s] [%(levelname)s] %(message)s'
     logging.basicConfig(stream=sys.stdout, format=format, level=level)
 
-    LOG.info("Starting Apic Exporter on port={} config={}".format(port, config))
-    LOG.info("APIC Exporter connects to APIC hosts: %s", apic_config['apic_hosts'])
+    LOG.info(f'starting apic Exporter on port={port} config={config}')
+    LOG.info(f'apic exporter connects to apic hosts: {apic_config["apic_hosts"]}')
 
     run_prometheus_server(port, collectors)
 

@@ -15,8 +15,7 @@ class ApicEquipmentCollector(Collector):
         super().__init__('apic_equipment', config)
 
     def describe(self):
-        yield GaugeMetricFamily('network_apic_flash_readwrite',
-                                'APIC flash is read and writeable')
+        yield GaugeMetricFamily('network_apic_flash_readwrite', 'APIC flash is read and writeable')
 
     def get_query(self) -> str:
         return '/api/node/class/eqptFlash.json' + \
@@ -32,14 +31,15 @@ class ApicEquipmentCollector(Collector):
         eqpt_template = namedtuple("apic_equipment", ['type', 'vendor', 'model', 'nodeId', 'acc'])
 
         # get a list of all flash devices NOT in read-write mode
-        flashes = [eqpt_template(type=d['eqptFlash']['attributes']['type'],
-                                 vendor=d['eqptFlash']['attributes']['vendor'],
-                                 model=d['eqptFlash']['attributes']['model'],
-                                 nodeId=self._parseNodeId(d['eqptFlash']['attributes']['dn']),
-                                 acc=d['eqptFlash']['attributes']['acc']
-                                 )
-                   for d in data['imdata'] if d['eqptFlash']['attributes']['model'].startswith('Micron_M500IT')
-                   ]
+        flashes = [
+            eqpt_template(type=d['eqptFlash']['attributes']['type'],
+                          vendor=d['eqptFlash']['attributes']['vendor'],
+                          model=d['eqptFlash']['attributes']['model'],
+                          nodeId=self._parseNodeId(d['eqptFlash']['attributes']['dn']),
+                          acc=d['eqptFlash']['attributes']['acc'])
+            for d in data['imdata']
+            if d['eqptFlash']['attributes']['model'].startswith('Micron_M500IT')
+        ]
 
         for flash in flashes:
             if flash.acc == 'read-write':
