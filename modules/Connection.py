@@ -7,12 +7,14 @@ from urllib3 import disable_warnings
 from urllib3 import exceptions
 from singleton_decorator import singleton
 
+from time import time
 from typing import List, Dict
 from collections import namedtuple
 
 LOG = logging.getLogger('apic_exporter.exporter')
 TIMEOUT = 10
 COOKIE_TIMEOUT = 5
+RESET_TIMEOUT_SECONDS = 30
 session_tuple = namedtuple('session_tuple', 'session available')
 
 
@@ -25,6 +27,7 @@ class SessionPool(object):
         self.__user = user
         self.__password = password
         self.__unavailable_sessions = 0
+        self.__last_reset = 0
 
         for host in hosts:
             self.__sessions[host] = self.createSession(host)
@@ -52,6 +55,8 @@ class SessionPool(object):
 
     def reset_unavailable_hosts(self):
         """Reset availability of all sessions and try to repair unavailable sessions."""
+        if (time() - self.__last_reset) < RESET_TIMEOUT_SECONDS:
+            return
         unavailable = 0
         for host, value in self.__sessions.items():
             if value.session is None:
@@ -68,6 +73,7 @@ class SessionPool(object):
                     unavailable += 1
             else:
                 self.__sessions[host] = session_tuple(value.session, True)
+        self.__last_reset = time()
         self.__unavailable_sessions = unavailable
 
     def get_unavailable_sessions(self) -> List[str]:
