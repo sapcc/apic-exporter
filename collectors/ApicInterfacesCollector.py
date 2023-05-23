@@ -1,42 +1,34 @@
 import logging
-import BaseCollector
-from prometheus_client.core import GaugeMetricFamily, Summary
+from typing import Dict, List
+
+from prometheus_client.core import GaugeMetricFamily
+
+from Collector import Collector
 
 LOG = logging.getLogger('apic_exporter.exporter')
-REQUEST_TIME = Summary('apic_interfaces_processing_seconds', 'Time spent processing request')
 
 
-class ApicInterfacesCollector(BaseCollector.BaseCollector):
+class ApicInterfacesCollector(Collector):
+
+    def __init__(self, config: Dict):
+        super().__init__('apic_interfaces', config)
 
     def describe(self):
-
         yield GaugeMetricFamily('network_apic_physcial_interface_reset_counter',
                                 'APIC physical interface reset counter')
 
-    @REQUEST_TIME.time()
-    def collect(self):
+    def get_query(self) -> str:
+        return '/api/node/class/ethpmPhysIf.json?query-target-filter=gt(ethpmPhysIf.resetCtr,"0")'
+
+    def get_metrics(self, host: str, data: Dict) -> List[GaugeMetricFamily]:
         LOG.debug('collecting apic interface metrics ...')
 
         g = GaugeMetricFamily('network_apic_physcial_interface_reset_counter',
                               'APIC physical interface reset counter',
                               labels=['apicHost', 'interfaceID'])
 
-        metric_counter = 0
-        # query only reset counters > 0
-        query = '/api/node/class/ethpmPhysIf.json?query-target-filter=gt(ethpmPhysIf.resetCtr,"0")'
-        for host in self.hosts:
-            fetched_data = self.query_host(host, query)
-            if fetched_data is None:
-                LOG.warning(f'skipping apic host {host}, {query} did not return anything')
-                continue
-
-            # physical interface reset counter
-            for item in fetched_data['imdata']:
-                g.add_metric(labels=[host, item['ethpmPhysIf']['attributes']['dn']],
-                             value=item['ethpmPhysIf']['attributes']['resetCtr'])
-                metric_counter += 1
-            break  # Each host produces the same metrics.
-
-        yield g
-
-        LOG.info('collected %s apic interface metrics', metric_counter)
+        # physical interface reset counter
+        for item in data['imdata']:
+            g.add_metric(labels=[host, item['ethpmPhysIf']['attributes']['dn']],
+                         value=item['ethpmPhysIf']['attributes']['resetCtr'])
+        return [g]
