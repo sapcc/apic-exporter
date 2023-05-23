@@ -2,6 +2,7 @@ from Collector import Collector
 import logging
 from prometheus_client.core import GaugeMetricFamily
 from typing import List, Dict
+from modules.Helper import Unpack
 
 LOG = logging.getLogger('apic_exporter.exporter')
 
@@ -27,8 +28,8 @@ class ApicFaultsCollector(Collector):
         faults = {}
         for fault_object in data['imdata']:
             try:
-                attrs = unpack(fault_object, 'faultInst', 'attributes')
-                key = [unpack(attrs, x) for x in ('severity', 'type', 'domain', 'code', 'cause', 'dn', 'ack')]
+                attrs = Unpack(fault_object, 'faultInst', 'attributes')
+                key = [Unpack(attrs, x) for x in ('severity', 'type', 'domain', 'code', 'cause', 'dn', 'ack')]
                 # only interested in the presence of the keyword `openstack` within the DN
                 key[5] = '1' if key[5] is not None and "openstack" in key[5] else '0'
                 key = tuple(key)
@@ -39,12 +40,3 @@ class ApicFaultsCollector(Collector):
         for k, v in faults.items():
             g_apic_faults.add_metric(labels=k, value=v)
         return [g_apic_faults]
-
-
-def unpack(data, *keys):
-    for k in keys:
-        if isinstance(data, dict) and data.get(k):
-            data = data[k]
-        else:
-            return ValueError(f"{keys} not found in data")
-    return data
