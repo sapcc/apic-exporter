@@ -55,7 +55,7 @@ class ApicHealthCollector(BaseCollector.BaseCollector):
         for host in self.hosts:
             fetched_data = self.query_host(host, query)
             if fetched_data is None:
-                LOG.warning(f'skipping apic host {host}, {query} did not return anything')
+                LOG.debug(f'skipping apic host {host}, {query} did not return anything')
                 continue
 
             g_cpu.add_metric(labels=[host], value=fetched_data['imdata'][0]['procEntity']['attributes']['cpuPct'])
