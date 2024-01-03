@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.12-alpine
 
 LABEL source_repository="https://github.com/sapcc/apic-exporter"
 MAINTAINER Martin Vossen <martin.vossen@sap.com>
