@@ -1,6 +1,6 @@
-urllib3
+urllib3>=2.5.0
+requests>=2.32.4
+pyyaml>=6.0.2
 prometheus_client
-requests
-pyyaml
 click
 singleton-decorator
