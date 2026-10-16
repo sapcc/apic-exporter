@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 LABEL source_repository="https://github.com/sapcc/apic-exporter"
 LABEL maintainer="Tommy Sauer <tommy.sauer@sap.com>"
